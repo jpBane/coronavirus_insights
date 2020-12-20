@@ -1,0 +1,83 @@
+---
+title: "Covid-19 in numbers"
+author: "Dr. Jörg Padberg"
+output: 
+  html_notebook:
+    code_folding: hide
+---
+
+# {.tabset}
+
+```{r, message=F}
+library(readr)
+library(stringr)
+library(dplyr)
+library(tsibble)
+library(ggplot2)
+
+# Import data
+covid19_testing <- read.csv("https://opendata.ecdc.europa.eu/covid19/testing/csv", 
+                    na.strings = "", 
+                    fileEncoding = "UTF-8-BOM")
+```
+
+
+## Testing
+
+```{r, fig.width=10}
+# Prepare data
+covid19_testing$year <- as.numeric(str_sub(covid19_testing$year_week, start = 1, end = 4))
+covid19_testing$week <- as.numeric(str_sub(covid19_testing$year_week, start = 7, end = 8))
+
+covid19_testing$yearweek <- yearweek(as.character(covid19_testing$year_week))
+
+casecol <- "firebrick2"
+poscol <- "olivedrab3"
+testcol <- "dodgerblue3"
+
+# -------------------
+# Visualise data
+# -------------------
+
+# New cases
+covid19_testing %>% 
+  mutate(new_cases_100k = 10^5*new_cases/population) %>% 
+  ggplot(aes(x = week, y = new_cases_100k)) +
+    geom_line(color = casecol, lwd = 1) +
+    geom_area(fill = casecol, alpha = 0.3) +
+    facet_wrap(~country) +
+    theme_classic() +
+    labs(title = "Weekly number of new reported Covid-19 cases",
+         x = "Week", 
+         y = "Confirmed new cases per 100.000 population")
+
+# Testing rate
+covid19_testing %>% 
+  ggplot(aes(x = week, y = testing_rate)) +
+    geom_line(color = testcol, lwd = 1) +
+    geom_area(fill = testcol, alpha = 0.3) +
+    facet_wrap(~country) +
+    theme_classic() +
+    labs(title = "Testing rate",
+         x = "Week",
+         y = "Testing rate per 100.000 population")
+
+# Positivity rate
+covid19_testing %>% 
+  ggplot(aes(x = week, y = positivity_rate)) +
+    geom_line(color = poscol, lwd = 1) +
+    geom_area(fill = poscol, alpha = 0.3) +
+    facet_wrap(~country) +
+    theme_classic() +
+    labs(title = "Positivity rate",
+         x = "Week",
+         y = "Share of positive tests [%]")
+
+```
+
+## Tab 2
+
+```{r}
+
+```
+
