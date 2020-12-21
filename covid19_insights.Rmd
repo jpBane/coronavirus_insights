@@ -9,22 +9,192 @@ output:
 # {.tabset}
 
 ```{r, message=F}
+# Load packages
+library(OECD)
+library(zoo)
 library(readr)
 library(stringr)
 library(dplyr)
+library(tidyr)
 library(tsibble)
 library(ggplot2)
+library(ggpubr)
 
+# Define custom colors
+eco_col <- "olivedrab3"
+
+# Define population
+pop_de <- 83.1*10^6
+```
+
+
+## Germany
+
+```{r, message=F}
+# Germany
+# rki <- read_csv("https://opendata.arcgis.com/datasets/dd4580c810204019a7b8eb3e0b329dd6_0.csv")
+# write_csv(rki, "covid19_rki.csv")
+rki <- read_csv("covid19_rki.csv")
+
+# Prepare data
+rki$Geschlecht <- factor(rki$Geschlecht)
+rki$Meldedatum <- as.Date(rki$Meldedatum)
+rki$Datenstand <- as.Date(rki$Datenstand, format = "%d.%m.%Y")
+rki$Refdatum <- as.Date(rki$Refdatum)
+
+```
+
+```{r, message=F, warning=F, fig.width=10}
+cases_de_relative <- rki %>% 
+  group_by(Meldedatum) %>% 
+  summarise(new_cases = sum(AnzahlFall)) %>% 
+  mutate(new_cases_100k = 10^5*new_cases/pop_de,
+         rollmean_cases_100k = rollmean(new_cases_100k, 7, fill = NA)) %>% 
+  ggplot(aes(x = Meldedatum, y = new_cases_100k)) +
+    geom_line(lwd = 0.2) +
+    geom_line(aes(y = rollmean_cases_100k), lwd = 1) +
+    theme_classic() +
+    labs(title = "Confirmed Covid-19 cases in Germany",
+         subtitle = "Cases per 100.000 population")
+
+cases_de_absolute <- rki %>% 
+  group_by(Meldedatum) %>% 
+  summarise(new_cases = sum(AnzahlFall)) %>% 
+  mutate(rollmean_cases = rollmean(new_cases, 7, fill = NA)) %>% 
+  ggplot(aes(x = Meldedatum, y = new_cases)) +
+    geom_line(lwd = 0.2) +
+    geom_line(aes(y = rollmean_cases), lwd = 1) +
+    theme_classic() +
+    labs(subtitle = "Absolute number of confirmed cases")
+
+deaths_de <- rki %>% 
+  group_by(Meldedatum) %>% 
+  summarise(deaths = sum(AnzahlTodesfall)) %>% 
+  mutate(rollmean_deaths = rollmean(deaths, 7, fill = NA)) %>% 
+  ggplot(aes(x = Meldedatum, y = deaths)) +
+    geom_line(lwd = 0.2) +
+    geom_line(aes(y = rollmean_deaths), lwd = 1) +
+    theme_classic() +
+    labs(subtitle = "Deaths by or in the presence of Covid-19")
+
+nest_de <- ggarrange(cases_de_absolute, deaths_de, nrow = 1)
+
+ggarrange(cases_de_relative, nest_de, ncol = 1, heights = c(2,1))
+```
+
+How old are the patients?
+
+```{r, message=F, fig.width=10}
+rki %>% 
+  group_by(Altersgruppe) %>% 
+  summarise(confirmed_cases = sum(AnzahlFall),
+            deaths = sum(AnzahlTodesfall)) %>% 
+  gather(confirmed_cases, deaths, key = "case", value = "number") %>% 
+  ggplot(aes(x = Altersgruppe, y = number)) +
+    geom_col() +
+    scale_y_continuous(labels = scales::comma) +
+    facet_wrap(~case, scales = "free_y") +
+    theme_classic()
+```
+
+...maybe a male/female graph? How does the demographic curve look?
+
+... maybe a stacked area chart to see how the age classes change over the pandemic?
+
+Now... a map
+
+```{r}
+# Germany on a County level
+
+```
+
+
+In order to take countermeasures against the economic consequences of the shutdown, the German government as well as other governsments has ... huge amounts of money. This, of course, has an effect on the inflation rate. The following graph illustrates the monthly customer Price Index (CPI) for Germany and the three largest economies of the world for the last five years. 
+
+... all items without seasonal adjustment. 
+
+```{r, fig.width=10}
+# ---------------------
+# Inflation
+# ---------------------
+
+# Import data
+CPI_datasets <- search_dataset("CPI")
+
+CPI_data_structure <- get_data_structure("PRICES_CPI")
+
+filter_list <- list(NULL, # the location/country
+                    "CPALTT01", # the basket (all items in this case)
+                    "IXOB", # the kind of index (standard index in this case - no seasonal adjustment)
+                    "M") # monthly data
+
+CPI_data <- get_dataset(dataset = "PRICES_CPI",
+                        filter = filter_list,
+                        start_time = 2015,
+                        end_time = 2020)
+
+# Prepare data
+CPI_data$obsTime <- as.yearmon(CPI_data$obsTime)
+
+# Visualise the data
+CPI_DE <- CPI_data %>% 
+  filter(LOCATION == "DEU") %>% 
+  ggplot(aes(x = obsTime, y = obsValue)) +
+    geom_line() +
+    scale_y_continuous(limits = c(NA, 115)) +
+    theme_classic() +
+    labs(title = "Customer Price Index (CPI)",
+         subtitle = "Germany",
+         x = "Year",
+         y = "CPI")
+
+CPI_EU <- CPI_data %>% 
+  filter(LOCATION == "EU27_2020") %>% 
+  ggplot(aes(x = obsTime, y = obsValue)) +
+    geom_line() +
+    scale_x_yearmon(format = "%Y") +
+    scale_y_continuous(limits = c(NA, 115)) +
+    theme_classic() +
+    labs(subtitle = "European Union (27)",
+         x = "Year",
+         y = "CPI")
+
+CPI_US <- CPI_data %>% 
+  filter(LOCATION == "USA") %>% 
+  ggplot(aes(x = obsTime, y = obsValue)) +
+    geom_line() +
+    scale_x_yearmon(format = "%Y") +
+    scale_y_continuous(limits = c(NA, 115)) +
+    theme_classic() +
+    labs(subtitle = "United States",
+         x = "Year",
+         y = "CPI")
+
+CPI_CN <- CPI_data %>% 
+  filter(LOCATION == "CHN") %>% 
+  ggplot(aes(x = obsTime, y = obsValue)) +
+    geom_line() +
+    scale_x_yearmon(format = "%Y") +
+    scale_y_continuous(limits = c(NA, 115)) +
+    theme_classic() +
+    labs(subtitle = "China",
+         x = "Year",
+         y = "CPI")
+
+nest_CPI <- ggarrange(CPI_EU, CPI_US, CPI_CN, ncol = 1)
+
+ggarrange(CPI_DE, nest_CPI, ncol = 2, widths = c(2,1))
+```
+
+
+## EU
+
+```{r, fig.width=10}
 # Import data
 covid19_testing <- read.csv("https://opendata.ecdc.europa.eu/covid19/testing/csv", 
                     na.strings = "", 
                     fileEncoding = "UTF-8-BOM")
-```
 
-
-## Testing
-
-```{r, fig.width=10}
 # Prepare data
 covid19_testing$year <- as.numeric(str_sub(covid19_testing$year_week, start = 1, end = 4))
 covid19_testing$week <- as.numeric(str_sub(covid19_testing$year_week, start = 7, end = 8))
@@ -75,7 +245,7 @@ covid19_testing %>%
 
 ```
 
-## Tab 2
+## USA
 
 ```{r}
 
