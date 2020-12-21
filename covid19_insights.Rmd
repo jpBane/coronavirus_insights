@@ -101,6 +101,8 @@ rki %>%
 
 ... maybe a stacked area chart to see how the age classes change over the pandemic?
 
+... what about detailed data regarding ortenau? 
+
 Now... a map
 
 ```{r}
