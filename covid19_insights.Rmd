@@ -1,5 +1,6 @@
 ---
 title: "Covid-19 in numbers"
+subtitle: "A data analysis using publicly available data"
 author: "Dr. Jörg Padberg"
 output: 
   html_notebook:
@@ -84,24 +85,61 @@ ggarrange(cases_de_relative, nest_de, ncol = 1, heights = c(2,1))
 
 How old are the patients?
 
-```{r, message=F, fig.width=10}
-rki %>% 
-  group_by(Altersgruppe) %>% 
+```{r, message=F, fig.width=10, fig.asp=0.4}
+rki_age_classes <- rki %>% 
+  filter(Geschlecht != "unbekannt") %>% 
+  group_by(Altersgruppe, Geschlecht) %>% 
   summarise(confirmed_cases = sum(AnzahlFall),
             deaths = sum(AnzahlTodesfall)) %>% 
-  gather(confirmed_cases, deaths, key = "case", value = "number") %>% 
-  ggplot(aes(x = Altersgruppe, y = number)) +
-    geom_col() +
+  gather(confirmed_cases, deaths, key = "case", value = "number") 
+
+rki_age_classes %>% 
+  ggplot(aes(x = Altersgruppe, y = number, fill = Geschlecht)) +
+    geom_col(position = "dodge", alpha = 0.7) +
     scale_y_continuous(labels = scales::comma) +
+    scale_fill_brewer(palette = "Set1", direction = -1) +
     facet_wrap(~case, scales = "free_y") +
     theme_classic()
 ```
 
-...maybe a male/female graph? How does the demographic curve look?
+How does the population pyramid looks like for the same age classes?
+
+```{r, message=F}
+population_pyramid_de <- read_csv("demographic_de_2018.csv")
+
+population_pyramid_de %>% 
+  ggplot(aes(x = Altersgruppe, y = Bevölkerung, fill = Geschlecht)) +
+    geom_col(position = "dodge", alpha = 0.7) +
+    scale_fill_brewer(palette = "Set1", direction = -1) +
+    theme_classic() +
+    labs(y = "Bevölkerung (in Tausend)")
+```
+
+Now a diagram showing, how big the share in each age-class is...
+
+```{r, message=F, fig.width=10, fig.asp=0.4}
+# Bring the data together
+left_join(rki_age_classes, population_pyramid_de) %>% 
+# Calculate the share of Covid-19 cases
+  mutate(cases_pct = number*100/(Bevölkerung*1000)) %>% 
+# Visualisation
+  filter(Altersgruppe != "unbekannt") %>% 
+  ggplot(aes(x = Altersgruppe, y = cases_pct, fill = Geschlecht)) +
+    geom_col(position = "dodge", alpha = 0.7) +
+    scale_fill_brewer(palette = "Set1", direction = -1) +
+    facet_wrap(~case, scales = "free_y") +
+    theme_classic()
+  
+```
+
 
 ... maybe a stacked area chart to see how the age classes change over the pandemic?
 
 ... what about detailed data regarding ortenau? 
+
+
+
+
 
 Now... a map
 
@@ -121,9 +159,9 @@ In order to take countermeasures against the economic consequences of the shutdo
 # ---------------------
 
 # Import data
-CPI_datasets <- search_dataset("CPI")
+#CPI_datasets <- search_dataset("CPI")
 
-CPI_data_structure <- get_data_structure("PRICES_CPI")
+#CPI_data_structure <- get_data_structure("PRICES_CPI")
 
 filter_list <- list(NULL, # the location/country
                     "CPALTT01", # the basket (all items in this case)
@@ -188,6 +226,7 @@ nest_CPI <- ggarrange(CPI_EU, CPI_US, CPI_CN, ncol = 1)
 ggarrange(CPI_DE, nest_CPI, ncol = 2, widths = c(2,1))
 ```
 
+How was the effect? Take a look at the GDP...
 
 ## EU
 
@@ -246,6 +285,7 @@ covid19_testing %>%
          y = "Share of positive tests [%]")
 
 ```
+
 
 ## USA
 
