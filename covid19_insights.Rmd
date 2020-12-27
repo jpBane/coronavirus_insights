@@ -326,10 +326,6 @@ labelLayer(spdf = nuts0.spdf, txt = "id", halo = T, show.lines = T)
 The previous map, however, only shows the current situation without any information regarding the development of the epidemic over time. For this reason, the next diagram illustrates the data of confirmed Covid-19 cases over time since the beginning of the pandemic. The underlying data is again weekly data from the ECDC. This means that each data point represents the number of confirmed infections with Covid-19 in one week. For a better comparison of the different countries, the number of cases was normalised on 100.000 persons. 
 
 ```{r, fig.width=10}
-# -------------------
-# Visualise data
-# -------------------
-
 # New cases
 covid19_testing %>% 
   mutate(new_cases_100k = 10^5*new_cases/population) %>% 
@@ -338,10 +334,15 @@ covid19_testing %>%
     geom_area(fill = casecol, alpha = 0.3) +
     facet_wrap(~country) +
     theme_classic() +
-    labs(title = "Weekly number of new reported Covid-19 cases",
+    labs(title = "Weekly number of newly reported Covid-19 cases",
          x = "Week", 
          y = "Confirmed new cases per 100.000 population")
 
+```
+
+Since some people claim that the cases are only that high because we are testing more than in the beginning of the pandemic, the following two diagrams illustrate the testing rate, i.e. the number of performed tests per 100.000 people in the given period (in this case one week) as well as the positivity rate. The latter one is the percentage of positive tests from all performed tests for the given period. 
+
+```{r, fig.width=10}
 # Testing rate
 covid19_testing %>% 
   ggplot(aes(x = week, y = testing_rate)) +
