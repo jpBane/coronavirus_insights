@@ -45,6 +45,14 @@ rki$Refdatum <- as.Date(rki$Refdatum)
 
 ```
 
+Show a map. The current situation first, then the history...
+
+```{r, eval=F}
+# Germany on a state level
+# test <- jsonlite::fromJSON("https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Coronaf%C3%A4lle_in_den_Bundesl%C3%A4ndern/FeatureServer/0/query?outFields=*&where=1%3D1")
+```
+
+
 ```{r, message=F, warning=F, fig.width=10}
 cases_de_relative <- rki %>% 
   group_by(Meldedatum) %>% 
@@ -160,7 +168,7 @@ rki %>%
 
 ... what about detailed data regarding ortenau? vs. germany?
 
-```{r}
+```{r, message=F}
 pop_ortenau <- 430953
 
 rki %>% 
@@ -175,16 +183,6 @@ rki %>%
     theme_classic() +
     labs(title = "Confirmed Covid-19 cases Ortenau County",
          subtitle = "Cases per 100.000 population")
-```
-
-
-
-
-Now... a map
-
-```{r, eval=F}
-# Germany on a state level
-# test <- jsonlite::fromJSON("https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Coronaf%C3%A4lle_in_den_Bundesl%C3%A4ndern/FeatureServer/0/query?outFields=*&where=1%3D1")
 ```
 
 
@@ -269,7 +267,7 @@ How was the effect? Take a look at the GDP...
 
 ## EU
 
-```{r, fig.width=10}
+```{r}
 # Import data
 covid19_testing <- read.csv("https://opendata.ecdc.europa.eu/covid19/testing/csv", 
                     na.strings = "", 
@@ -284,7 +282,31 @@ covid19_testing$yearweek <- yearweek(as.character(covid19_testing$year_week))
 casecol <- "firebrick2"
 poscol <- "olivedrab3"
 testcol <- "dodgerblue3"
+```
 
+Show a map. The current situation first, then the history...
+
+```{r, fig.width=10}
+# Prepare the data (only the most recent week is of interest)
+covid19_eu <- covid19_testing %>% 
+  group_by(country) %>% 
+  top_n(1, year_week) %>% 
+  ungroup() %>% 
+  mutate(new_cases_100k = 10^5*new_cases/population)
+
+# Now the spatial data (Covid-19 data only on the country level)
+library(cartography)
+library(sp)
+
+data(nuts2006)
+
+choroLayer(spdf = nuts0.spdf, df = covid19_eu, dfid = "country_code", var = "new_cases_100k")
+```
+
+
+Now the History...
+
+```{r, fig.width=10}
 # -------------------
 # Visualise data
 # -------------------
