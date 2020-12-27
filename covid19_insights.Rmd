@@ -135,17 +135,56 @@ left_join(rki_age_classes, population_pyramid_de) %>%
 
 ... maybe a stacked area chart to see how the age classes change over the pandemic?
 
-... what about detailed data regarding ortenau? 
+```{r, message=F, fig.width=10, fig.asp=0.4}
+rki %>% 
+  filter(Geschlecht != "unbekannt") %>% 
+  group_by(Meldedatum, Geschlecht) %>% 
+  summarise(confirmed_cases = sum(AnzahlFall),
+            deaths = sum(AnzahlTodesfall)) %>% 
+  ungroup() %>% 
+  mutate('7day_avg_cases' = zoo::rollmean(confirmed_cases, 7, fill = NA),
+         '7day_avg_deaths' = zoo::rollmean(deaths, 7, fill = NA)) %>% 
+#  gather(confirmed_cases, deaths, key = "type", value = "number") %>% 
+  select(-confirmed_cases, -deaths) %>% 
+  gather('7day_avg_cases', '7day_avg_deaths', key = "type", value = "number") %>% 
+  ggplot(aes(x = Meldedatum, y = number, fill = Geschlecht)) +
+    geom_area(alpha = 0.7, position = "fill") +
+    facet_wrap(~type) +
+    scale_fill_brewer(palette = "Set1", direction = -1) +
+    theme_classic() +
+    labs(title = "Gender relation of confirmed Covid-19 cases and deaths",
+         x = NULL,
+         y = "Share")
+```
 
+
+... what about detailed data regarding ortenau? vs. germany?
+
+```{r}
+pop_ortenau <- 430953
+
+rki %>% 
+  filter(Landkreis == "LK Ortenaukreis") %>% 
+  group_by(Meldedatum) %>% 
+  summarise(new_cases = sum(AnzahlFall)) %>% 
+  mutate(new_cases_100k = 10^5*new_cases/pop_ortenau,
+         rollmean_cases_100k = rollmean(new_cases_100k, 7, fill = NA)) %>% 
+  ggplot(aes(x = Meldedatum, y = new_cases_100k)) +
+    geom_line(lwd = 0.2) +
+    geom_line(aes(y = rollmean_cases_100k), lwd = 1) +
+    theme_classic() +
+    labs(title = "Confirmed Covid-19 cases Ortenau County",
+         subtitle = "Cases per 100.000 population")
+```
 
 
 
 
 Now... a map
 
-```{r}
-# Germany on a County level
-
+```{r, eval=F}
+# Germany on a state level
+# test <- jsonlite::fromJSON("https://services7.arcgis.com/mOBPykOjAyBO2ZKk/arcgis/rest/services/Coronaf%C3%A4lle_in_den_Bundesl%C3%A4ndern/FeatureServer/0/query?outFields=*&where=1%3D1")
 ```
 
 
