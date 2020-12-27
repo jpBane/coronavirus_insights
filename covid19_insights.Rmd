@@ -300,7 +300,12 @@ library(sp)
 
 data(nuts2006)
 
-choroLayer(spdf = nuts0.spdf, df = covid19_eu, dfid = "country_code", var = "new_cases_100k")
+choroLayer(spdf = nuts0.spdf, 
+           df = covid19_eu, 
+           dfid = "country_code", 
+           var = "new_cases_100k",
+           col = carto.pal("red.pal", n1 = 7),
+           method = "pretty")
 ```
 
 
