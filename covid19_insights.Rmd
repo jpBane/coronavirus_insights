@@ -369,7 +369,69 @@ covid19_testing %>%
 
 ## USA
 
-```{r}
+The data is taken directly from the [GitHub repository of the Johns Hopkins University](https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv). The following table provides an overview of the data structure using the first six rows of the data set: 
 
+```{r, message=F}
+# Daten einlesen
+url <- "https://github.com/CSSEGISandData/COVID-19/raw/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv"
+
+covid19_usa <- read_csv(url)
+
+head(covid19_usa)
+```
+
+```{r}
+covid19_usa_tidy <- covid19_usa %>% 
+  select(-c(UID, iso2, iso3, code3, Admin2, Country_Region, Lat, Long_)) %>% 
+  gather(-c(FIPS, Province_State, Combined_Key), key = "Date", value = "confirmed_cases") %>% 
+  mutate(Date = as.Date(Date, format = "%m/%d/%y"),
+         fips = FIPS) %>% # schreibweise wichtig für usmap-Paket
+  select(Date, Combined_Key, Province_State, fips, confirmed_cases)
+
+covid19_prepared <- covid19_usa_tidy %>% 
+  group_by(Combined_Key) %>% # fips hat NA's. Stattdessen Combined_Key verwenden!
+  mutate(previous_day = lag(confirmed_cases, n = 1L),
+         new_cases = confirmed_cases-previous_day) %>% 
+  ungroup()
+
+# Prepare the countypop data frame
+countypop2015 <- usmap::countypop %>% 
+  mutate(fips = as.numeric(fips))
+
+# Join the two data frames, exclude redundant variables and calculate cases per 100.000 people
+covid19_normalised <- covid19_prepared %>% 
+  left_join(countypop2015, by = "fips") %>% 
+  select(-abbr, -county) %>% 
+  mutate(new_cases_100k = 10^5*new_cases/pop_2015)
+```
+
+```{r, message=F, fig.width=10, fig.asp=0.5}
+# Total cases for the US
+covid19_prepared %>% 
+  group_by(Date) %>% 
+  summarise(new_cases_total = sum(new_cases)) %>% 
+  mutate(rollmean_cases = rollmean(new_cases_total, 7, fill = NA)) %>% 
+  ggplot(aes(x = Date, y = new_cases_total)) +
+    geom_line(lwd = 0.2) +
+    geom_line(aes(y = rollmean_cases), lwd = 1) +
+    theme_classic() +
+    labs(title = "Confirmed Covid-19 infections in the US",
+         x = NULL,
+         y = "confirmed new cases per day")
+```
+
+
+```{r, message=F, fig.width=10, fig.asp=1}
+# Cases per US-State
+covid19_normalised %>% 
+  group_by(Date, Province_State) %>% 
+  summarise(state_sum = sum(new_cases, na.rm = T)) %>% 
+  ggplot(aes(x = Date, y = state_sum)) +
+    geom_line() +
+    facet_wrap(~Province_State) +
+    theme_classic() +
+    labs(title = "Confirmed Covid-19 infections in the US per State",
+         x = NULL,
+         y = NULL)
 ```
 
