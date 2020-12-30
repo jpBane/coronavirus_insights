@@ -24,6 +24,8 @@ library(ggpubr)
 library(cartography)
 library(sp)
 
+library(eurostat) # for more up-to-date map data for Germany
+
 # Define custom colors
 eco_col <- "olivedrab3"
 
@@ -50,8 +52,40 @@ rki$Refdatum <- as.Date(rki$Refdatum)
 
 Show a map. The current situation first, then the history...
 
-```{r, eval=F}
+```{r, message=F, fig.asp=0.8}
+rki_counties <- read_csv("https://opendata.arcgis.com/datasets/917fc37a709542548cc3be077a786c17_0.csv")
 
+# Get a more up-to-date spatial polygons data frame of Germany
+map_de2 <- get_eurostat_geospatial(output_class = "spdf",
+                                   resolution = "60",
+                                   nuts_level = "3",
+                                   year = "2016")
+
+# Calculate average incidence for Berlin (otherwise not in map)
+avg_berlin <- mean(rki_berlin$cases7_per_100k)
+
+rki_counties_with_berlin <- rki_counties %>% 
+  select(GEN, cases7_per_100k, NUTS) %>% 
+  add_row(GEN = "Berlin", cases7_per_100k = avg_berlin, NUTS = "DE300")
+
+# Plot the choropleth map
+par(mar = c(0,1,2,1))
+choroLayer(spdf = map_de2, 
+           df = rki_counties_with_berlin, 
+           dfid = "NUTS", 
+           var = "cases7_per_100k", 
+           col = carto.pal("red.pal", n1 = 6),
+           method = "q6",
+           legend.title.txt = "Cases per 100.000",
+           legend.pos = "right",
+           legend.frame = T)
+layoutLayer(title = "Confirmed Covid-19 cases in Germany per county (7-day incidence)",
+            frame = F,
+            col = "white",
+            coltitle = "black",
+            author = paste("Data in this map from:", unique(rki_counties$last_update)),
+            north = T,
+            scale = F) # because of unrealistic number
 ```
 
 
