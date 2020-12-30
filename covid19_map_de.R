@@ -3,6 +3,7 @@ library(readr)
 library(stringr)
 library(dplyr)
 library(cartography)
+library(sp)
 library(ggplot2)
 
 # RKI Daten je Bundesland importieren
@@ -122,7 +123,38 @@ layoutLayer(title = "Confirmed Covid-19 cases in Germany",
             scale = 100)
 
 # Berlin funktioniert noch nicht
-
-rki_counties %>% 
+rki_berlin <- rki_counties %>% 
   filter(str_detect(GEN, "Berlin")) %>% 
   select(GEN, BEZ, cases7_per_100k, NUTS)
+
+rki_berlin
+
+# Welchen NUTS Code hat Berlin? DE300?
+landkreise@data %>% 
+  filter(id == "DE300")
+
+# Wie baue ich das jetzt in den RKI Datensatz ein?
+avg_berlin <- mean(rki_berlin$cases7_per_100k)
+
+rki_counties_with_berlin <- rki_counties %>% 
+  select(GEN, cases7_per_100k, NUTS) %>% 
+  add_row(GEN = "Berlin", cases7_per_100k = avg_berlin, NUTS = "DE300")
+
+# Jetzt nochmal die Karte mit dem neuen Datensatz
+par(mar = c(0,1,2,1))
+choroLayer(spdf = map_de2, 
+           df = rki_counties_with_berlin, 
+           dfid = "NUTS", 
+           var = "cases7_per_100k", 
+           col = carto.pal("red.pal", n1 = 12),
+           method = "pretty",
+           legend.title.txt = "Legend",
+           legend.pos = "right",
+           legend.frame = T)
+layoutLayer(title = "Confirmed Covid-19 cases in Germany",
+            frame = F,
+            col = "white",
+            coltitle = "black",
+            author = paste("Data in this map from:"),
+            north = T,
+            scale = 100)
