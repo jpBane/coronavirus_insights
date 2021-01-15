@@ -336,6 +336,7 @@ data(nuts2006)
 last_update <- unique(covid19_eu$year_week)
 
 par(mar = c(0,1,2,1))
+plot(nuts0.spdf)
 choroLayer(spdf = nuts0.spdf, 
            df = covid19_eu, 
            dfid = "country_code", 
@@ -344,7 +345,9 @@ choroLayer(spdf = nuts0.spdf,
            method = "pretty",
            legend.title.txt = "Cases per 100.000",
            legend.pos = "right",
-           legend.frame = T)
+           legend.frame = T,
+           border = "black",
+           add = T)
 layoutLayer(title = "Confirmed Covid-19 cases in the EU (7-day incidence)",
             frame = F,
             col = "white",
