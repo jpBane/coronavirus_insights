@@ -92,6 +92,24 @@ layoutLayer(title = "Confirmed Covid-19 cases in Germany per county (7-day incid
             scale = F) # because of unrealistic number
 ```
 
+```{r}
+# History as a line-chart or as a faceted choropleth map? -> line-chart first
+rki %>% 
+  select(Meldedatum, AnzahlFall, Landkreis) %>% 
+  group_by(Meldedatum) %>% 
+  summarise(new_cases = sum(AnzahlFall)) %>% 
+  mutate(incidence_7day = rollmean(new_cases, 7, fill = NA)/pop_de*10^5*7) %>% 
+  ggplot(aes(x = Meldedatum, y = incidence_7day)) +
+    geom_line() +
+    geom_area(alpha = 0.3) +
+    geom_hline(yintercept = 50, lty = 2) +
+    theme_classic() +
+    labs(title = "Development of the Covid-19 7-day incidence in Germany",
+         x = "Datum", 
+         y = "7-day incidence")
+```
+
+
 
 ```{r, message=F, warning=F, fig.width=10}
 cases_de_relative <- rki %>% 
