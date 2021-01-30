@@ -92,7 +92,7 @@ layoutLayer(title = "Confirmed Covid-19 cases in Germany per county (7-day incid
             scale = F) # because of unrealistic number
 ```
 
-```{r}
+```{r, fig.width=10, fig.asp=0.5}
 # History as a line-chart or as a faceted choropleth map? -> line-chart first
 rki %>% 
   select(Meldedatum, AnzahlFall, Landkreis) %>% 
