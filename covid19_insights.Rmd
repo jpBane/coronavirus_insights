@@ -62,6 +62,10 @@ map_de2 <- get_eurostat_geospatial(output_class = "spdf",
                                    year = "2016")
 
 # Calculate average incidence for Berlin (otherwise not in map)
+rki_berlin <- rki_counties %>% 
+  filter(str_detect(GEN, "Berlin")) %>% 
+  select(GEN, BEZ, cases7_per_100k, NUTS)
+
 avg_berlin <- mean(rki_berlin$cases7_per_100k)
 
 rki_counties_with_berlin <- rki_counties %>% 
