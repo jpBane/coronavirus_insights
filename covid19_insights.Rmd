@@ -100,7 +100,7 @@ rki %>%
   summarise(new_cases = sum(AnzahlFall)) %>% 
   mutate(incidence_7day = rollmean(new_cases, 7, fill = NA)/pop_de*10^5*7) %>% 
   ggplot(aes(x = Meldedatum, y = incidence_7day)) +
-    geom_line() +
+    geom_line(lwd = 1) +
     geom_area(alpha = 0.3) +
     geom_hline(yintercept = 50, lty = 2) +
     theme_classic() +
