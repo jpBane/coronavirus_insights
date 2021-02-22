@@ -488,7 +488,7 @@ covid19_normalised %>%
   summarise(state_sum = sum(new_cases, na.rm = T)) %>% 
   ggplot(aes(x = Date, y = state_sum)) +
     geom_line() +
-    facet_wrap(~Province_State) +
+    facet_wrap(~Province_State, scales = "free_y") +
     scale_x_date(date_labels = "%b") +
     theme_classic() +
     labs(title = "Confirmed Covid-19 infections in the US per State",
