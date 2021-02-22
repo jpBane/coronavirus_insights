@@ -92,7 +92,7 @@ layoutLayer(title = "Confirmed Covid-19 cases in Germany per county (7-day incid
             scale = F) # because of unrealistic number
 ```
 
-```{r, fig.width=10, fig.asp=0.5}
+```{r, fig.width=10, fig.asp=0.5, message=F}
 # History as a line-chart or as a faceted choropleth map? -> line-chart first
 rki %>% 
   select(Meldedatum, AnzahlFall, Landkreis) %>% 
@@ -266,7 +266,7 @@ filter_list <- list(NULL, # the location/country
 CPI_data <- get_dataset(dataset = "PRICES_CPI",
                         filter = filter_list,
                         start_time = 2015,
-                        end_time = 2020)
+                        end_time = 2021)
 
 # Prepare data
 CPI_data$obsTime <- as.yearmon(CPI_data$obsTime)
@@ -344,7 +344,7 @@ testcol <- "dodgerblue3"
 
 The following map provides an overview of the magnitude of confirmed Covid-19 infections in the European Union. Since the European Centre for Disease Prevention and Control (ECDC) only provides weekly data as of December 17th 2020, the map shows the 7-day incidence, i.e. the sum of all confirmed cases in the last calendar week per 100.000 persons. 
 
-```{r, fig.asp=1}
+```{r, fig.asp=1, warning=F}
 # Prepare the data (only the most recent week is of interest)
 covid19_eu <- covid19_testing %>% 
   group_by(country) %>% 
@@ -358,7 +358,7 @@ data(nuts2006)
 last_update <- unique(covid19_eu$year_week)
 
 par(mar = c(0,1,2,1))
-plot(nuts0.spdf)
+plot(nuts0.spdf) # to show all countries (the ones without data)
 choroLayer(spdf = nuts0.spdf, 
            df = covid19_eu, 
            dfid = "country_code", 
