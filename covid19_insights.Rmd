@@ -473,6 +473,7 @@ covid19_prepared %>%
   ggplot(aes(x = Date, y = new_cases_total)) +
     geom_line(lwd = 0.2) +
     geom_line(aes(y = rollmean_cases), lwd = 1) +
+    scale_y_continuous(labels = scales::comma) +
     theme_classic() +
     labs(title = "Confirmed Covid-19 infections in the US",
          x = NULL,
