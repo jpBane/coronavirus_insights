@@ -30,7 +30,7 @@ library(eurostat) # for more up-to-date map data for Germany
 eco_col <- "olivedrab3"
 
 # Define population
-pop_de <- 83.1*10^6
+pop_de <- 83190556 # Stand 2020-09-30, DeStatis
 ```
 
 
