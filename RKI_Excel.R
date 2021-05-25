@@ -19,7 +19,7 @@ GET(url = url, write_disk("RKI_Fallzahlen_Kum_Tab.xlsx",
 
 excel_sheets("RKI_Fallzahlen_Kum_Tab.xlsx")
 landkreise_7tage_inzidenz <- read_excel("RKI_Fallzahlen_Kum_Tab.xlsx", 
-                                        sheet = "LK_7-Tage-Inzidenz", 
+                                        sheet = "LK_7-Tage-Inzidenz (fixiert)", 
                                         skip = 4)
 
 
