@@ -27,7 +27,7 @@ landkreise_7tage_inzidenz <- read_excel("RKI_Fallzahlen_Kum_Tab.xlsx",
 # Daten vorbereiten
 # ------------------
 landkreise_tidy <- landkreise_7tage_inzidenz %>% 
-  gather(-...1, -LK, -LKNR, key = "Datum", value = "Inzidenz_7_Tage")
+  gather(-NR, -LK, -LKNR, key = "Datum", value = "Inzidenz_7_Tage")
 
 #landkreise_tidy$Datum <- as.Date(landkreise_tidy$Datum, format = "%d.%m.%Y")
 # Das Datenformat ändert sich ab dem 16.04.2021 plötzlich von Standard auf Datum -> wie gehe ich damit um?
